@@ -10,6 +10,7 @@ public class server : MonoBehaviour {
 
 	GameObject	TargetChar;
 	behaviourCharBase	ScriptBehaviourCharBase;
+	managePlayer	ScriptManagePlayer;
 
 
 	WebSocket ws;
@@ -18,7 +19,6 @@ public class server : MonoBehaviour {
 	Vector3 pos_self;
 
 	ArrayList	list_message	= new ArrayList();
-
 
 
 	/*
@@ -62,6 +62,7 @@ public class server : MonoBehaviour {
 
 		TargetChar	= GameObject.Find("charSelf");
 		ScriptBehaviourCharBase	= TargetChar.GetComponent<behaviourCharBase>();
+		ScriptManagePlayer	= gameObject.GetComponent<managePlayer>();
 
 		pos_self	= TargetChar.transform.position;
 
@@ -75,7 +76,9 @@ public class server : MonoBehaviour {
 	
 	void OnApplicationQuit () {
 		Debug.Log(this.name+":OnApplicationQuit()");
-		
+
+		SendMessage_Remove(server_id);
+
 		if (ws != null) {
 			ws.Close();
 		}
@@ -86,85 +89,87 @@ public class server : MonoBehaviour {
 		if (list_message.Count > 0) {
 			string s = list_message[0] as string;
 			list_message.RemoveAt(0);
-			Debug.Log(s);
 
+			IDictionary param	= (IDictionary)Json.Deserialize(s);
+			string type	= (string)param["type"];
+			switch (type) {
+			case "init":
 			{
-				IDictionary messageList	= (IDictionary)Json.Deserialize(s);
-				string type	= (string)messageList["type"];
-				Debug.Log(type);
-				
-				switch (type) {
-				case "init":
-				{
-					string id	= (string)messageList["id"];
-					Debug.Log(id);
-					
-					Message_Init(id);
-					break;
+				string id	= (string)param["id"];
+
+//				ArrayList list_id	= new ArrayList();
+//				ArrayList list_pos	= new ArrayList();
+				List<string> list_id	= new List<string>();
+				List<Vector3> list_pos	= new List<Vector3>();
+
+//				Debug.Log(param["others"]);
+
+				if (param["others"] != null) {
+					IList list_other = (IList)param["others"];
+					foreach (IDictionary param_other in list_other) {
+						string id_other = (string)param_other["id"];
+						IList list_pos_other	= (IList)param_other["pos"];
+						Vector3 pos_other = new Vector3(0,0,0);
+						float.TryParse((string)list_pos_other[0], out pos_other.x);
+						float.TryParse((string)list_pos_other[1], out pos_other.y);
+						float.TryParse((string)list_pos_other[2], out pos_other.z);
+
+						list_id.Add(id_other);
+						list_pos.Add(pos_other);
+					}
 				}
-				case "add":
-				{
-					string id	= (string)messageList["id"];
-					Debug.Log(id);
-					IList list_pos	= (IList)messageList["pos"];
-					Debug.Log(list_pos.ToString());
-					Vector3 pos	= new Vector3(0,0,0);
-					float.TryParse((string)list_pos[0], out pos.x);
-					float.TryParse((string)list_pos[1], out pos.y);
-					float.TryParse((string)list_pos[2], out pos.z);
-//					Vector3 pos	= new Vector3((float)((double)list_pos[0]),
-//					                          (float)((double)list_pos[1]),
-//					                          (float)((double)list_pos[2]));
-//					Vector3 pos	= new Vector3((float)((double)list_pos[0]),
-//					                          (float)((double)list_pos[1]),
-//					                          0.0f);
-					Message_Add(id,pos);
-					break;
-				}
-				case "move":
-				{
-					string id	= (string)messageList["id"];
-					Debug.Log(id);
-					IList list_pos	= (IList)messageList["pos"];
-					Debug.Log(list_pos.ToString());
-					Vector3 pos	= new Vector3(0,0,0);
-					float.TryParse((string)list_pos[0], out pos.x);
-					float.TryParse((string)list_pos[1], out pos.y);
-					float.TryParse((string)list_pos[2], out pos.z);
-//					Vector3 pos	= new Vector3((float)((double)list_pos[0]),
-//					                          (float)((double)list_pos[1]),
-//					                          (float)((double)list_pos[2]));
-//					Vector3 pos	= new Vector3((float)((double)list_pos[0]),
-//					                          (float)((double)list_pos[1]),
-//					                          0.0f);
-					Message_Move(id,pos);
-					break;
-				}
-				case "remove":
-				{
-					string id	= (string)messageList["id"];
-					Debug.Log(id);
-					
-					Message_Remove(id);
-					break;
-				}
-				case "chat":
-				{
-					string id	= (string)messageList["id"];
-					string msg	= (string)messageList["message"];
-					
-					Message_Chat(id,msg);
-					break;
-				}
-				}
+
+				Message_Init(id,list_id,list_pos);
+				break;
 			}
-
-
-
+			case "add":
+			{
+				string id	= (string)param["id"];
+				IList list_pos	= (IList)param["pos"];
+				Vector3 pos	= new Vector3(0,0,0);
+				float.TryParse((string)list_pos[0], out pos.x);
+				float.TryParse((string)list_pos[1], out pos.y);
+				float.TryParse((string)list_pos[2], out pos.z);
+				Message_Add(id,pos);
+				break;
+			}
+			case "move":
+			{
+				string id	= (string)param["id"];
+				IList list_pos	= (IList)param["pos"];
+				Vector3 pos	= new Vector3(0,0,0);
+				float.TryParse((string)list_pos[0], out pos.x);
+				float.TryParse((string)list_pos[1], out pos.y);
+				float.TryParse((string)list_pos[2], out pos.z);
+				Message_Move(id,pos);
+				break;
+			}
+			case "remove":
+			{
+				string id	= (string)param["id"];
+				Message_Remove(id);
+				break;
+			}
+			case "chat":
+			{
+				string id	= (string)param["id"];
+				string msg	= (string)param["message"];
+				Message_Chat(id,msg);
+				break;
+			}
+			case "shoot":
+			{
+				string id	= (string)param["id"];
+				IList list_force	= (IList)param["force"];
+				Vector3 force	= new Vector3(0,0,0);
+				float.TryParse((string)list_force[0], out force.x);
+				float.TryParse((string)list_force[1], out force.y);
+				float.TryParse((string)list_force[2], out force.z);
+				Message_Shoot(id,force);
+				break;
+			}
+			}
 		}
-
-
-
 	}
 
 
@@ -229,7 +234,8 @@ public class server : MonoBehaviour {
 		ws.Connect();
 	}
 
-	protected void Message_Init (string id) {
+	protected void Message_Init (string id, List<string> list_id = null, List<Vector3> list_pos = null) {
+		Debug.Log("Init "+id);
 
 		server_id	= id;
 //		Debug.Log(pos_self.ToString());
@@ -238,36 +244,60 @@ public class server : MonoBehaviour {
 		//ERROR not main thread
 
 		SendMessage_Add(server_id, pos_self);
+
+		if (list_id.Count > 0) {
+			for (int index=0; index < list_id.Count; index++) {
+//				string id_other = list_id[index] as string;
+//				Vector3 pos_other = new Vector3( (float)list_pos[index].x,list_pos[index].y,list_pos[index].z);
+				Message_Add(list_id[index], list_pos[index]);
+			}
+		}
 	}
 	
 	protected void Message_Add (string id, Vector3 pos) {
+		Debug.Log("Add "+id+" "+pos.ToString());
 
-		if (server_id==id) {
-			
+		if (server_id!=id) {
+			ScriptManagePlayer.Add(id,pos);
+//			SendMessage_Add(server_id, pos_self);//TEST 無限！
+		} else {
 		}
+
+//		SendMessage_Add(server_id, pos_self);//TEST 無限！
 	}
 
 	protected void Message_Chat (string id, string message) {
-		
-		if (server_id==id) {
-			
+		Debug.Log("Chat "+id+" "+message);
+
+		if (server_id!=id) {
+			ScriptManagePlayer.Chat(id,message);
 		}
 	}
 
 	protected void Message_Remove (string id) {
-		
-		if (server_id==id) {
-			
+		Debug.Log("Remove "+id);
+
+		if (server_id!=id) {
+			ScriptManagePlayer.Remove(id);
 		}
 	}
 	
 	protected void Message_Move (string id, Vector3 pos) {
-		
-		if (server_id==id) {
-			
+		Debug.Log("Move "+id+" "+pos.ToString());
+
+		if (server_id!=id) {
+			ScriptManagePlayer.Move(id,pos);
 		}
 	}
 
+	protected void Message_Shoot (string id, Vector3 force) {
+		Debug.Log("Shoot "+id+" "+force.ToString());
+		
+		if (server_id!=id) {
+			ScriptManagePlayer.Shoot(id,force);
+		}
+	}
+	
 	public void SendMessage_Init () {
 		Debug.Log("SendMessage_Init() ");
 		
@@ -284,7 +314,7 @@ public class server : MonoBehaviour {
 
 		Dictionary<string,object> jsonSrc	= new Dictionary<string, object>();
 		jsonSrc.Add("type","chat");
-		jsonSrc.Add("id","dummychatid");
+		jsonSrc.Add("id",server_id);
 		jsonSrc.Add("message",message);
 
 		if (ws != null) {
@@ -319,8 +349,6 @@ public class server : MonoBehaviour {
 		if (ws != null) {
 			ws.Send(Json.Serialize(jsonSrc));
 		}
-
-		//NOTE とありあえず、接続切断で代用出来るはず
 	}
 
 	public void SendMessage_Move (string id, Vector3 pos) {
@@ -335,6 +363,23 @@ public class server : MonoBehaviour {
 		list_pos[2] = pos.z.ToString();
 		jsonSrc.Add("pos",list_pos);
 		
+		if (ws != null) {
+			ws.Send(Json.Serialize(jsonSrc));
+		}
+	}
+
+	public void SendMessage_Shoot (string id, Vector3 force) {
+		Debug.Log("SendMessage_Shoot() "+id);
+
+		Dictionary<string,object> jsonSrc	= new Dictionary<string, object>();
+		jsonSrc.Add("type","shoot");
+		jsonSrc.Add("id",id);
+		string[] list_force = new string[3];
+		list_force[0]	= force.x.ToString();
+		list_force[1]	= force.y.ToString();
+		list_force[2]	= force.z.ToString();
+		jsonSrc.Add("force",list_force);
+
 		if (ws != null) {
 			ws.Send(Json.Serialize(jsonSrc));
 		}

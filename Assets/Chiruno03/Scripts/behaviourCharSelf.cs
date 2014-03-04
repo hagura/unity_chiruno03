@@ -28,7 +28,7 @@ public class behaviourCharSelf : behaviourCharBase {
 		base.Start();
 
 		//DUMMY
-		InitRandom("self...");
+		InitRandom("offline...");
 	}
 
 	protected override void Update () {
@@ -44,6 +44,8 @@ public class behaviourCharSelf : behaviourCharBase {
 				// do double click
 
 				timer_idle	= Time.time;
+
+				rigidbody.velocity	= new Vector3(0,0,0);
 
 				Vector3 pos_mouse	= TargetCamera.ScreenToWorldPoint(Input.mousePosition);
 				pos_mouse.z	= 0;
@@ -68,7 +70,28 @@ public class behaviourCharSelf : behaviourCharBase {
 		if (one_click) {
 			if ((Time.time - timer_for_double_click) > delay) {
 				one_click	= false;
+
+				Shoot(TargetCamera.ScreenToWorldPoint(Input.mousePosition));
 			}
+		}
+	}
+
+	protected void Shoot (Vector3 pos_mouse_on_world) {
+
+		pos_mouse_on_world.z	= 0;
+
+		Vector3 direction	= (pos_mouse_on_world - gameObject.transform.position).normalized;
+
+		Vector3 pos		= gameObject.transform.position + direction * OffsetPosShoot;
+		pos.z	= 0;
+		Vector3 force	= direction * ForceShoot;
+		force.z	= 0;
+
+		GameObject bullet = (GameObject)Instantiate(TargetBullet,pos,Quaternion.identity);
+		bullet.rigidbody.velocity	= force;
+
+		if (ScriptsGame) {
+			ScriptsGame.GetComponent<server>().SendMessage_Shoot(m_id,force);
 		}
 	}
 
@@ -83,6 +106,9 @@ public class behaviourCharSelf : behaviourCharBase {
 		bool isSend	= GUI.Button(new Rect(Screen.width - 80, 10, 60, 20), "send");
 		
 		if (isSend) {
+			if (ScriptsGame) {
+				ScriptsGame.GetComponent<server>().SendMessage_Chat(m_message);
+			}
 			updateMessage();
 		}
 	}

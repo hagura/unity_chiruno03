@@ -1,10 +1,10 @@
 ﻿<Properties>
   <MonoDevelop.Ide.Workspace ActiveConfiguration="Debug" />
-  <MonoDevelop.Ide.Workbench ActiveDocument="Assets\Chiruno03\Scripts\server.cs">
+  <MonoDevelop.Ide.Workbench ActiveDocument="Assets\Chiruno03\Scripts\behaviourCharSelf.cs">
     <Files>
-      <File FileName="Assets\Chiruno03\Scripts\server.cs" Line="224" Column="15" />
-      <File FileName="Assets\Chiruno03\Scripts\behaviourCharSelf.cs" Line="61" Column="6" />
-      <File FileName="Assets\Chiruno03\Scripts\behaviourCharBase.cs" Line="106" Column="29" />
+      <File FileName="Assets\Chiruno03\Scripts\behaviourCharSelf.cs" Line="92" Column="3" />
+      <File FileName="Assets\Chiruno03\Scripts\behaviourCharOther.cs" Line="15" Column="3" />
+      <File FileName="Assets\Chiruno03\Scripts\behaviourCharBase.cs" Line="203" Column="1" />
     </Files>
   </MonoDevelop.Ide.Workbench>
   <MonoDevelop.Ide.DebuggingService.Breakpoints>

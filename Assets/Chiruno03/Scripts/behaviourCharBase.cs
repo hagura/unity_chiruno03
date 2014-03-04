@@ -13,10 +13,16 @@ public class behaviourCharBase : MonoBehaviour {
 
 	public float WaitMessage	= 10f;//sec
 
+
+	public float OffsetPosShoot	= 1.1f;
+	public float ForceShoot		= 5f;
+
+
 	public GameObject ScriptsGame;
 	public GameObject TargetTextMessage;
 	public GameObject TargetTextID;
 	public Camera TargetCamera;
+	public GameObject TargetBullet;
 
 	protected string m_message	= "";
 	protected string m_id		= "";
@@ -85,9 +91,11 @@ public class behaviourCharBase : MonoBehaviour {
 		}
 		*/
 
+		/*
 		if (Time.time - timer_idle > wait_idle) {
 			MoveOffsetRandom(RandomRangeIdleMoveOffset);
 		}
+		*/
 
 		if (Time.time - timer_message > WaitMessage) {
 			clearMessage();
@@ -102,9 +110,12 @@ public class behaviourCharBase : MonoBehaviour {
 		
 		// update text-chat
 		if (TargetTextMessage) {
+			/*
 			if (ScriptsGame) {
 				ScriptsGame.GetComponent<server>().SendMessage_Chat(m_message);
 			}
+			//BUG not send-message with update-message!!
+			*/
 
 			TargetTextMessage.guiText.text = m_message;
 			m_message	= "";
